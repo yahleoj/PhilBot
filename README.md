@@ -1,6 +1,7 @@
 # PhilBot
 //
-Created by Joel Z. Hay - UoNPC President and Founder
+Created by Joel Z. Hay - UoNPC President and Founder.
+
 Custom discord bot for handling the UoNPC discord server. Features games and polls.
 //
 
