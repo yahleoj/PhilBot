@@ -30,3 +30,9 @@ Provides a random philosophy quote from a pool of 450.
 
 /guess-the-quote:
 Sends a quote with no author, and prompts the user to guess who said it.
+
+/directory:
+Provides a directory of all topics saved in topics.json. Has a discord UI that allows to navigate between all different topics.
+
+/embeddings:
+Allows for all the embeddings for the topics to be regenerated on command
