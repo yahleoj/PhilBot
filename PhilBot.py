@@ -22,6 +22,7 @@ import json
 import wikipediaapi
 from wikipediaapi import SearchProp, SearchInfo, SearchWhat, SearchQiProfile, SearchSort
 import shutil
+import random
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -127,71 +128,71 @@ def ClosenessCheck(closeness, filename):
             print(f"{sents[i]}\nand \n{sents[j]}")
 
 
-# - - - - - - - - - - - - - Weekly topic poll - - - - - - - - - - - -
-#run a weekly poll to decide the topic
-@tasks.loop(time=poll_time)
-async def weekly_poll():
-    if datetime.datetime.now().weekday() == poll_day:       #if it's time for the poll, send the following message
-        if os.path.exists("poll_memory.txt"):
-            return
-        poll = discord.Poll(
-            question="What should next week's topic be?",
-            duration=datetime.timedelta(hours=1)
-        )
-        for i in range(len(categories)):
-            poll.add_answer(text=categories[i])
-
-        channel = await bot.fetch_channel(poll_channel_id)
-        poll_message = await channel.send(poll=poll)
-        data = [poll_message.id, channel.id]        #store the poll channel and message id
-
-        with open("poll_memory.txt", "w", newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(data)
-        if not poll_check.is_running():     #start to check for the poll being done
-            poll_check.start()
-
-
-# - - - - - - - - - - - - - Poll Check - - - - - - - - - - - -
-@tasks.loop(minutes=1)
-async def poll_check():
-    if not os.path.exists("poll_memory.txt"):       #if the poll memory doesn't exist, end
-        print("poll_memory.txt does not exist")
-        return
-    with open("poll_memory.txt", "r") as file:
-        reader = csv.reader(file)
-        rows = list(reader)
-        poll_id = int(rows[0][0])
-        channel_id = int(rows[0][1])
-        channel = await bot.fetch_channel(channel_id)
-        poll_message = await channel.fetch_message(poll_id)
-        poll = poll_message.poll        #open memory file and store information as variables
-    if poll.expires_at and datetime.datetime.now(datetime.timezone.utc) >= poll.expires_at:     #if it is poll time, find the highest vote
-        result = max(poll.answers, key=lambda a: a.vote_count)
-        await channel.send(f"poll is finished! The result is: {result.text}")
-        with open("topics.json",'r') as file:
-            topics = json.load(file)
-            topic_index = np.random.randint(0,len(topics.get("Category").get(result.text).get("Topics")))
-            a = 0
-            while topics.get("Category").get(result.text).get("Used")[topic_index] == True:
-                topic_index = np.random.randint(0,len(topics.get("Category").get(result.text).get("Topics")))
-                a += 1
-                if a >= len(topics.get("Category").get(result.text).get("Topics")):
-                    for i in range(len(topics.get("Category").get(result.text).get("Topics"))):
-                        if topics.get("Category").get(result.text).get("Used")[i] == False:
-                            topic_index = i
-                            break
-                    break
-            weekly_topic = topics.get("Category").get(result.text).get("Topics")[topic_index]
-            topic_suggester = topics.get("Category").get(result.text).get("Suggesters")[topic_index]
-        topics.get("Category").get(result.text)["Used"][topic_index] = True
-        with open("topics.json",'w') as file:
-            json.dump(topics,file,indent=4)
-
-
-        await channel.send(f"Next week's topic will be: {weekly_topic}, suggested by {topic_suggester}")
-        os.remove("poll_memory.txt")
-        poll_check.stop()
+## - - - - - - - - - - - - - Weekly topic poll - - - - - - - - - - - -
+##run a weekly poll to decide the topic
+#@tasks.loop(time=poll_time)
+#async def weekly_poll():
+#    if datetime.datetime.now().weekday() == poll_day:       #if it's time for the poll, send the following message
+#        if os.path.exists("poll_memory.txt"):
+#            return
+#        poll = discord.Poll(
+#            question="What should next week's topic be?",
+#            duration=datetime.timedelta(hours=1)
+#        )
+#        for i in range(len(categories)):
+#            poll.add_answer(text=categories[i])
+#
+#        channel = await bot.fetch_channel(poll_channel_id)
+#        poll_message = await channel.send(poll=poll)
+#        data = [poll_message.id, channel.id]        #store the poll channel and message id
+#
+#        with open("poll_memory.txt", "w", newline='') as file:
+#            writer = csv.writer(file)
+#            writer.writerow(data)
+#        if not poll_check.is_running():     #start to check for the poll being done
+#            poll_check.start()
+#
+#
+## - - - - - - - - - - - - - Poll Check - - - - - - - - - - - -
+#@tasks.loop(minutes=1)
+#async def poll_check():
+#    if not os.path.exists("poll_memory.txt"):       #if the poll memory doesn't exist, end
+#        print("poll_memory.txt does not exist")
+#        return
+#    with open("poll_memory.txt", "r") as file:
+#        reader = csv.reader(file)
+#        rows = list(reader)
+#        poll_id = int(rows[0][0])
+#        channel_id = int(rows[0][1])
+#        channel = await bot.fetch_channel(channel_id)
+#        poll_message = await channel.fetch_message(poll_id)
+#        poll = poll_message.poll        #open memory file and store information as variables
+#    if poll.expires_at and datetime.datetime.now(datetime.timezone.utc) >= poll.expires_at:     #if it is poll time, find the highest vote
+#        result = max(poll.answers, key=lambda a: a.vote_count)
+#        await channel.send(f"poll is finished! The result is: {result.text}")
+#        with open("topics.json",'r') as file:
+#            topics = json.load(file)
+#            topic_index = np.random.randint(0,len(topics.get("Category").get(result.text).get("Topics")))
+#            a = 0
+#            while topics.get("Category").get(result.text).get("Used")[topic_index] == True:
+#                topic_index = np.random.randint(0,len(topics.get("Category").get(result.text).get("Topics")))
+#                a += 1
+#                if a >= len(topics.get("Category").get(result.text).get("Topics")):
+#                    for i in range(len(topics.get("Category").get(result.text).get("Topics"))):
+#                        if topics.get("Category").get(result.text).get("Used")[i] == False:
+#                            topic_index = i
+#                            break
+#                    break
+#            weekly_topic = topics.get("Category").get(result.text).get("Topics")[topic_index]
+#            topic_suggester = topics.get("Category").get(result.text).get("Suggesters")[topic_index]
+#        topics.get("Category").get(result.text)["Used"][topic_index] = True
+#        with open("topics.json",'w') as file:
+#            json.dump(topics,file,indent=4)
+#
+#
+#        await channel.send(f"Next week's topic will be: {weekly_topic}, suggested by {topic_suggester}")
+#        os.remove("poll_memory.txt")
+#        poll_check.stop()
 
 # - - - - - - - - - - - - - Daily Backup - - - - - - - - - - - -
 @tasks.loop(time=BackupTime)
@@ -245,7 +246,18 @@ async def quote_guess(interaction: discord.Interaction):
             return(m.author == interaction.user and m.channel == interaction.channel)
         msg = await bot.wait_for('message', check=check, timeout=60)
         auth = str(quote[0])
-        if msg.content.strip().lower() == auth.strip().lower():     #if the original person said the correct answer, display correct
+        if msg.content.strip().lower() == auth.strip().lower():     #if the original person said the correct answer, display correct and give points
+            sender = str(msg.author)
+            with open("users.json","r") as file:
+                users = json.load(file)
+                if users.get(sender) is None:
+                    users[sender] = 10
+                score = users.get(sender)
+                score = score + 15
+                users[sender] = score
+            with open("users.json","w") as file:
+                json.dump(users,file,indent=4)
+
             await interaction.followup.send('Correct!')
 
         else:
@@ -315,16 +327,17 @@ class ButtonView(View):
                         topics = json.load(file)
                         a = 0
                         for topic in topics.get("Category")[f"{categories[i]}"].get("Topics"):
-                            NewEmbed.add_field(name=f"{topic}",value=f"{topics.get("Category")[f"{categories[i]}"].get("Suggesters")[a]},       {topics.get("Category")[f"{categories[i]}"].get("Used")[a]}",inline=False)
+                            NewEmbed.add_field(name=f"{a+1}: {topic}",value=f"{topics.get("Category")[f"{categories[i]}"].get("Suggesters")[a]},       {topics.get("Category")[f"{categories[i]}"].get("Used")[a]}",inline=False)
                             a += 1
-
+                            
                     await interaction.response.edit_message(embed=NewEmbed)
                 except Exception as e:
                     print(f"Button callback error: {e}")
-                    await interaction.response.send_message(f"Error: {e}", ephemeral=True)
+                    await interaction.followup.send(f"Error: {e}", ephemeral=True)
 
             button.callback = button_callback
             self.add_item(button)
+
         button = discord.ui.Button(label=f"Return to directory", style=discord.ButtonStyle.blurple)
         async def button_callback(interaction):
             embed = discord.Embed(
@@ -335,9 +348,9 @@ class ButtonView(View):
             for i, category in enumerate(categories):
                 embed.add_field(name=f"{i + 1}: {category}", value="", inline=False)
             await interaction.response.edit_message(embed=embed)
-
         button.callback = button_callback
         self.add_item(button)
+
 
 @bot.tree.command(name="directory")
 async def directory(interaction: discord.Interaction):
@@ -351,6 +364,68 @@ async def directory(interaction: discord.Interaction):
         embed.add_field(name=f"{i+1}: {category}",value="",inline=False)
 
     await interaction.response.send_message(view=ButtonView(),embed=embed)
+
+
+# - - - - - - - - - - - - - Gamble - - - - - - - - - - - -
+#allows users to gamble with pre-made "points"
+
+@bot.tree.command(name="gamble")
+async def gamble(interaction: discord.Interaction):
+    auth = str(interaction.user)
+    with open("users.json","r") as file:
+        users = json.load(file)
+        score = users[auth]
+        gamble = random.random()
+        print(gamble)
+    if score <= 15:
+        await interaction.response.send_message("You've gone broke!")
+
+    elif gamble > 0.99:
+        score = score+1000
+        embed = discord.Embed(
+            title="Slot Machine",
+            description="",
+            color=discord.Color.blue()
+        )
+        embed.add_field(name=":gem: :gem: :gem:", value="", inline=False)
+        embed.add_field(name="JACKPOT!!! +1000 POINTS!", value="", inline=False)
+        await interaction.response.send_message(embed=embed)
+    elif gamble > 0.75:
+        score = score+35
+        embed = discord.Embed(
+            title="Slot Machine",
+            description="",
+            color=discord.Color.gold()
+        )
+        embed.add_field(name=":moneybag: :moneybag: :moneybag:", value="", inline=False)
+        embed.add_field(name="You win! +35 points!", value="", inline=False)
+        await interaction.response.send_message(embed=embed)
+    elif gamble > 0.25:
+        score = score+1
+        embed = discord.Embed(
+            title="Slot Machine",
+            description="",
+            color=discord.Color.red()
+        )
+        embed.add_field(name=":cherries: :cherries: :cherries:", value="", inline=False)
+        embed.add_field(name="You win! +1 point!", value="", inline=False)
+        await interaction.response.send_message(embed=embed)
+    else:
+        score = score-35
+        embed = discord.Embed(
+            title="Slot Machine",
+            description="",
+            color=discord.Color.orange()
+        )
+        embed.add_field(name=":cherries: :horse: :fly:", value="", inline=False)
+        embed.add_field(name="You lose! -35 points", value="", inline=False)
+        await interaction.response.send_message(embed=embed)
+
+    users[auth] = score
+    with open("users.json","w") as file:
+        json.dump(users,file,indent=4)
+
+
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -483,6 +558,22 @@ class Approve(Select):
 #-----------------------------------------------------------------------------------------------------------------------
 #                                               Automatic bot actions
 #-----------------------------------------------------------------------------------------------------------------------
+
+@bot.event
+async def on_message(message):  #give people 3 points per message sent
+    if message.author == bot.user:
+        return
+    auth = str(message.author)
+    with open("users.json", "r") as file:
+        users = json.load(file)
+        score = users[auth]
+
+    score += 3
+    users[auth] = score
+    with open("users.json", "w") as file:
+        json.dump(users, file, indent=4)
+
+
 
 @bot.event
 async def on_ready():   #when bot starts, begin checking the weekly poll, sync the commands, and update the embeddings
