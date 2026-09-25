@@ -128,71 +128,71 @@ def ClosenessCheck(closeness, filename):
             print(f"{sents[i]}\nand \n{sents[j]}")
 
 
-## - - - - - - - - - - - - - Weekly topic poll - - - - - - - - - - - -
-##run a weekly poll to decide the topic
-#@tasks.loop(time=poll_time)
-#async def weekly_poll():
-#    if datetime.datetime.now().weekday() == poll_day:       #if it's time for the poll, send the following message
-#        if os.path.exists("poll_memory.txt"):
-#            return
-#        poll = discord.Poll(
-#            question="What should next week's topic be?",
-#            duration=datetime.timedelta(hours=1)
-#        )
-#        for i in range(len(categories)):
-#            poll.add_answer(text=categories[i])
-#
-#        channel = await bot.fetch_channel(poll_channel_id)
-#        poll_message = await channel.send(poll=poll)
-#        data = [poll_message.id, channel.id]        #store the poll channel and message id
-#
-#        with open("poll_memory.txt", "w", newline='') as file:
-#            writer = csv.writer(file)
-#            writer.writerow(data)
-#        if not poll_check.is_running():     #start to check for the poll being done
-#            poll_check.start()
-#
-#
-## - - - - - - - - - - - - - Poll Check - - - - - - - - - - - -
-#@tasks.loop(minutes=1)
-#async def poll_check():
-#    if not os.path.exists("poll_memory.txt"):       #if the poll memory doesn't exist, end
-#        print("poll_memory.txt does not exist")
-#        return
-#    with open("poll_memory.txt", "r") as file:
-#        reader = csv.reader(file)
-#        rows = list(reader)
-#        poll_id = int(rows[0][0])
-#        channel_id = int(rows[0][1])
-#        channel = await bot.fetch_channel(channel_id)
-#        poll_message = await channel.fetch_message(poll_id)
-#        poll = poll_message.poll        #open memory file and store information as variables
-#    if poll.expires_at and datetime.datetime.now(datetime.timezone.utc) >= poll.expires_at:     #if it is poll time, find the highest vote
-#        result = max(poll.answers, key=lambda a: a.vote_count)
-#        await channel.send(f"poll is finished! The result is: {result.text}")
-#        with open("topics.json",'r') as file:
-#            topics = json.load(file)
-#            topic_index = np.random.randint(0,len(topics.get("Category").get(result.text).get("Topics")))
-#            a = 0
-#            while topics.get("Category").get(result.text).get("Used")[topic_index] == True:
-#                topic_index = np.random.randint(0,len(topics.get("Category").get(result.text).get("Topics")))
-#                a += 1
-#                if a >= len(topics.get("Category").get(result.text).get("Topics")):
-#                    for i in range(len(topics.get("Category").get(result.text).get("Topics"))):
-#                        if topics.get("Category").get(result.text).get("Used")[i] == False:
-#                            topic_index = i
-#                            break
-#                    break
-#            weekly_topic = topics.get("Category").get(result.text).get("Topics")[topic_index]
-#            topic_suggester = topics.get("Category").get(result.text).get("Suggesters")[topic_index]
-#        topics.get("Category").get(result.text)["Used"][topic_index] = True
-#        with open("topics.json",'w') as file:
-#            json.dump(topics,file,indent=4)
-#
-#
-#        await channel.send(f"Next week's topic will be: {weekly_topic}, suggested by {topic_suggester}")
-#        os.remove("poll_memory.txt")
-#        poll_check.stop()
+# - - - - - - - - - - - - - Weekly topic poll - - - - - - - - - - - -
+#run a weekly poll to decide the topic
+@tasks.loop(time=poll_time)
+async def weekly_poll():
+    if datetime.datetime.now().weekday() == poll_day:       #if it's time for the poll, send the following message
+        if os.path.exists("poll_memory.txt"):
+            return
+        poll = discord.Poll(
+            question="What should next week's topic be?",
+            duration=datetime.timedelta(hours=1)
+        )
+        for i in range(len(categories)):
+            poll.add_answer(text=categories[i])
+
+        channel = await bot.fetch_channel(poll_channel_id)
+        poll_message = await channel.send(poll=poll)
+        data = [poll_message.id, channel.id]        #store the poll channel and message id
+
+        with open("poll_memory.txt", "w", newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(data)
+        if not poll_check.is_running():     #start to check for the poll being done
+            poll_check.start()
+
+
+# - - - - - - - - - - - - - Poll Check - - - - - - - - - - - -
+@tasks.loop(minutes=1)
+async def poll_check():
+    if not os.path.exists("poll_memory.txt"):       #if the poll memory doesn't exist, end
+        print("poll_memory.txt does not exist")
+        return
+    with open("poll_memory.txt", "r") as file:
+        reader = csv.reader(file)
+        rows = list(reader)
+        poll_id = int(rows[0][0])
+        channel_id = int(rows[0][1])
+        channel = await bot.fetch_channel(channel_id)
+        poll_message = await channel.fetch_message(poll_id)
+        poll = poll_message.poll        #open memory file and store information as variables
+    if poll.expires_at and datetime.datetime.now(datetime.timezone.utc) >= poll.expires_at:     #if it is poll time, find the highest vote
+        result = max(poll.answers, key=lambda a: a.vote_count)
+        await channel.send(f"poll is finished! The result is: {result.text}")
+        with open("topics.json",'r') as file:
+            topics = json.load(file)
+            topic_index = np.random.randint(0,len(topics.get("Category").get(result.text).get("Topics")))
+            a = 0
+            while topics.get("Category").get(result.text).get("Used")[topic_index] == True:
+                topic_index = np.random.randint(0,len(topics.get("Category").get(result.text).get("Topics")))
+                a += 1
+                if a >= len(topics.get("Category").get(result.text).get("Topics")):
+                    for i in range(len(topics.get("Category").get(result.text).get("Topics"))):
+                        if topics.get("Category").get(result.text).get("Used")[i] == False:
+                            topic_index = i
+                            break
+                    break
+            weekly_topic = topics.get("Category").get(result.text).get("Topics")[topic_index]
+            topic_suggester = topics.get("Category").get(result.text).get("Suggesters")[topic_index]
+        topics.get("Category").get(result.text)["Used"][topic_index] = True
+        with open("topics.json",'w') as file:
+            json.dump(topics,file,indent=4)
+
+
+        await channel.send(f"Next week's topic will be: {weekly_topic}, suggested by {topic_suggester}")
+        os.remove("poll_memory.txt")
+        poll_check.stop()
 
 # - - - - - - - - - - - - - Daily Backup - - - - - - - - - - - -
 @tasks.loop(time=BackupTime)
@@ -382,44 +382,16 @@ async def gamble(interaction: discord.Interaction):
 
     elif gamble > 0.99:
         score = score+1000
-        embed = discord.Embed(
-            title="Slot Machine",
-            description="",
-            color=discord.Color.blue()
-        )
-        embed.add_field(name=":gem: :gem: :gem:", value="", inline=False)
-        embed.add_field(name="JACKPOT!!! +1000 POINTS!", value="", inline=False)
-        await interaction.response.send_message(embed=embed)
-    elif gamble > 0.75:
-        score = score+35
-        embed = discord.Embed(
-            title="Slot Machine",
-            description="",
-            color=discord.Color.gold()
-        )
-        embed.add_field(name=":moneybag: :moneybag: :moneybag:", value="", inline=False)
-        embed.add_field(name="You win! +35 points!", value="", inline=False)
-        await interaction.response.send_message(embed=embed)
-    elif gamble > 0.25:
+        await interaction.response.send_message("JACKPOT WOOOOOHOOOO!!!!!!!! +1000 points!")
+    elif gamble > 0.89:
+        score = score+50
+        await interaction.response.send_message("You win! +50 points!")
+    elif gamble > 0.44138888888888888:
         score = score+1
-        embed = discord.Embed(
-            title="Slot Machine",
-            description="",
-            color=discord.Color.red()
-        )
-        embed.add_field(name=":cherries: :cherries: :cherries:", value="", inline=False)
-        embed.add_field(name="You win! +1 point!", value="", inline=False)
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message("You win! +1 point!")
     else:
         score = score-35
-        embed = discord.Embed(
-            title="Slot Machine",
-            description="",
-            color=discord.Color.orange()
-        )
-        embed.add_field(name=":cherries: :horse: :fly:", value="", inline=False)
-        embed.add_field(name="You lose! -35 points", value="", inline=False)
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message("You lose! -35 points!")
 
     users[auth] = score
     with open("users.json","w") as file:
@@ -558,22 +530,6 @@ class Approve(Select):
 #-----------------------------------------------------------------------------------------------------------------------
 #                                               Automatic bot actions
 #-----------------------------------------------------------------------------------------------------------------------
-
-@bot.event
-async def on_message(message):  #give people 3 points per message sent
-    if message.author == bot.user:
-        return
-    auth = str(message.author)
-    with open("users.json", "r") as file:
-        users = json.load(file)
-        score = users[auth]
-
-    score += 3
-    users[auth] = score
-    with open("users.json", "w") as file:
-        json.dump(users, file, indent=4)
-
-
 
 @bot.event
 async def on_ready():   #when bot starts, begin checking the weekly poll, sync the commands, and update the embeddings
